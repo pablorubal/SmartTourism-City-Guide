@@ -1,0 +1,3 @@
+"""
+SmartTourism FastAPI Application
+"""
