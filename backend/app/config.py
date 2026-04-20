@@ -73,9 +73,3 @@ class Settings(BaseSettings):
 # Load settings
 settings = Settings()
 
-# Property aliases for easier access
-settings.debug = settings.DEBUG
-settings.database_url = settings.DATABASE_URL
-settings.db_pool_size = settings.DB_POOL_SIZE
-settings.db_max_overflow = settings.DB_MAX_OVERFLOW
-

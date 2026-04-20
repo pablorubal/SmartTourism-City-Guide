@@ -274,7 +274,7 @@ class OrionService:
                 service_path=service_path
             )
             
-            entities = response.json()
+            entities = await response.json()
             total = int(response.headers.get("Fiware-ResultCount", len(entities)))
             
             logger.debug(f"🔍 Query {entity_type}: found {len(entities)} entities")

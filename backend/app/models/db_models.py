@@ -69,7 +69,7 @@ class TouristProfile(Base):
     # Relationships
     user = relationship("User", back_populates="profile")
     consumption_behaviors = relationship("ConsumptionBehavior", back_populates="profile")
-    social_matches = relationship("SocialMatch", back_populates="tourist_1")
+    social_matches = relationship("SocialMatch", foreign_keys="SocialMatch.tourist_1_id", back_populates="tourist_1")
 
 
 class TouristTrip(Base):

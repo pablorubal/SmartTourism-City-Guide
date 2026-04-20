@@ -1,7 +1,7 @@
 """Recommendation routes"""
 from fastapi import APIRouter
 
-from app.models import ReckommendationSchema
+from app.models import RecommendationSchema
 
 router = APIRouter()
 
