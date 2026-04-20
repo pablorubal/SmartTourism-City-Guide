@@ -97,7 +97,7 @@ class TouristTripSchema(BaseModel):
     planned_route: List[str] = []
 
 
-class ReckommendationSchema(BaseModel):
+class RecommendationSchema(BaseModel):
     """Recommendation Schema"""
     tourist_id: str
     recommended_pois: List[POISchema]
@@ -109,7 +109,7 @@ class SocialMatchSchema(BaseModel):
     """Social Match Schema"""
     match_id: str
     tourist_a_id: str
-    tourist_b_id_id: str
+    tourist_b_id: str
     affinity_score: float = Field(0.0, ge=0, le=100)
     suggested_poi: Optional[str] = None
     status: str = "pending"

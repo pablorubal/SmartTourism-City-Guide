@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # Orion Context Broker - NGSI-LD Entity Store
+  orion:
+    image: fiware/orion:4.0.0
+    container_name: orion-cb
+    ports:
+      - "1026:1026"
+    depends_on:
+      - mongo
+    environment:
+      ORION_MONGO_HOST: mongo
+      ORION_MONGO_PORT: 27017
+      ORION_MONGO_DB: orion
+      ORION_LOG_LEVEL: INFO
+    networks:
+      - smarttourism
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1026/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB - Required by Orion CB
+  mongo:
+    image: mongo:7.0
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: orion
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - smarttourism
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # TimescaleDB - Time Series Data (ConsumptionBehavior, historical trends)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: smarttourism
+      POSTGRES_PASSWORD: smarttourism_dev
+      POSTGRES_DB: smarttourism_db
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./scripts/init-timescaledb.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - smarttourism
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smarttourism"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # Redis - Caching & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smarttourism
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # PgAdmin - Database Management UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@smarttourism.local
+      PGADMIN_DEFAULT_PASSWORD: admin_dev
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - smarttourism
+    depends_on:
+      - timescaledb
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: smarttourism-backend
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://smarttourism:smarttourism_dev@timescaledb:5432/smarttourism_db
+      REDIS_URL: redis://redis-cache:6379/0
+      ORION_URL: http://orion-cb:1026
+      LOG_LEVEL: INFO
+    depends_on:
+      - timescaledb
+      - redis
+      - orion
+    volumes:
+      - ../backend:/app
+    networks:
+      - smarttourism
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Vite Frontend Dev Server
+  frontend:
+    image: node:20-alpine
+    container_name: smarttourism-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    networks:
+      - smarttourism
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+
+networks:
+  smarttourism:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  timescaledb_data:
+  redis_data:
+  pgadmin_data:

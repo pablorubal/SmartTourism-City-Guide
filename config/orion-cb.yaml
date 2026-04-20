@@ -1,0 +1,124 @@
+# Orion Context Broker Configuration
+# This file configures the NGSI-LD context broker for SmartTourism
+
+# Service Configuration
+service:
+  name: "Orion Context Broker"
+  description: "NGSI-LD Entity Store for SmartTourism"
+  version: "4.0.0"
+
+# Logging
+logging:
+  level: INFO
+  format: "json"
+  outputs:
+    - stdout
+    - file
+
+# NGSI-LD Settings
+ngsi_ld:
+  # Entity types for SmartTourism domain
+  entity_types:
+    - TouristProfile
+    - TouristTrip
+    - TouristDestination
+    - PointOfInterest
+    - Museum
+    - Beach
+    - Event
+    - TouristRental
+    - ConsumptionBehavior
+    - SocialMatch
+    - Alert
+    - Device
+
+  # Supported media types
+  media_types:
+    - application/ld+json
+    - application/json
+
+  # Default context for entities
+  default_context: "https://smarttourism.example.com/context.jsonld"
+
+# Database
+mongodb:
+  host: mongo
+  port: 27017
+  database: orion
+  replicas: 1
+  ssl: false
+
+# API Configuration
+api:
+  # Base URL path for API endpoints
+  base_path: /ngsi-ld/v1
+
+  # Pagination defaults
+  pagination:
+    limit: 20
+    max_limit: 1000
+
+  # Rate limiting (requests per minute)
+  rate_limit: 1000
+
+  # CORS settings
+  cors:
+    enabled: true
+    allowed_origins:
+      - "http://localhost:5173"
+      - "http://localhost:3000"
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    allowed_headers:
+      - Content-Type
+      - Authorization
+
+# Subscription Configuration (notifications)
+subscriptions:
+  enabled: true
+  max_subscriptions_per_entity: 100
+
+# Notification delivery
+notifications:
+  retry_policy:
+    max_retries: 3
+    retry_delay_seconds: 30
+  timeout_seconds: 10
+
+# Performance tuning
+performance:
+  # Connection pool size
+  connection_pool_size: 100
+  # Query timeout
+  query_timeout_ms: 10000
+  # Max entities per batch operation
+  batch_size: 100
+
+# Monitoring
+monitoring:
+  metrics_enabled: true
+  metrics_port: 9090
+  health_check_interval_seconds: 30
+
+# Context Data Models
+context_data:
+  # Maps SmartTourism concepts to NGSI-LD properties
+  mappings:
+    TouristProfile:
+      - property: preferredLanguage
+        type: string
+      - property: nationality
+        type: string
+      - property: interests
+        type: array
+    POI:
+      - property: location
+        type: geo:json
+      - property: occupancy
+        type: number
+      - property: capacity
+        type: number

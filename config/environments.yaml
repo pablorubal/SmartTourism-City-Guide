@@ -1,0 +1,160 @@
+# SmartTourism Environment Configuration
+# Defines environment-specific variables and settings
+
+environments:
+  development:
+    description: "Local development environment"
+    debug: true
+    
+    database:
+      url: "postgresql+asyncpg://smarttourism:smarttourism_dev@localhost:5432/smarttourism_db"
+      echo_sql: true
+      pool_size: 10
+      max_overflow: 20
+    
+    redis:
+      url: "redis://localhost:6379/0"
+      ttl_seconds: 3600
+    
+    orion:
+      url: "http://localhost:1026"
+      tenant: "smarttourism"
+      timeout_seconds: 10
+    
+    cors:
+      allowed_origins:
+        - "http://localhost:5173"
+        - "http://localhost:3000"
+        - "http://127.0.0.1:5173"
+    
+    logging:
+      level: "DEBUG"
+      format: "json"
+    
+    api:
+      title: "SmartTourism City Guide - Development"
+      version: "0.1.0"
+      docs_url: "/docs"
+      openapi_url: "/openapi.json"
+    
+    jwt:
+      secret_key: "dev-secret-key-change-in-production"
+      algorithm: "HS256"
+      expire_minutes: 1440
+    
+    features:
+      enable_swagger: true
+      enable_profiling: true
+      enable_mock_data: true
+
+  staging:
+    description: "Staging environment (pre-production)"
+    debug: false
+    
+    database:
+      url: "postgresql+asyncpg://smarttourism:${DB_PASSWORD}@staging-db.internal:5432/smarttourism_db"
+      echo_sql: false
+      pool_size: 30
+      max_overflow: 40
+    
+    redis:
+      url: "redis://staging-redis.internal:6379/0"
+      ttl_seconds: 7200
+    
+    orion:
+      url: "http://staging-orion.internal:1026"
+      tenant: "smarttourism"
+      timeout_seconds: 15
+    
+    cors:
+      allowed_origins:
+        - "https://staging.smarttourism.dev"
+    
+    logging:
+      level: "INFO"
+      format: "json"
+    
+    api:
+      title: "SmartTourism City Guide - Staging"
+      version: "0.1.0"
+      docs_url: "/docs"
+      openapi_url: "/openapi.json"
+    
+    jwt:
+      secret_key: "${JWT_SECRET_KEY}"
+      algorithm: "HS256"
+      expire_minutes: 1440
+    
+    features:
+      enable_swagger: true
+      enable_profiling: false
+      enable_mock_data: false
+
+  production:
+    description: "Production environment"
+    debug: false
+    
+    database:
+      url: "postgresql+asyncpg://smarttourism:${DB_PASSWORD}@prod-db.internal:5432/smarttourism_db"
+      echo_sql: false
+      pool_size: 50
+      max_overflow: 60
+    
+    redis:
+      url: "redis://prod-redis.internal:6379/0"
+      ttl_seconds: 86400
+    
+    orion:
+      url: "https://orion.smarttourism.com"
+      tenant: "smarttourism-prod"
+      timeout_seconds: 20
+    
+    cors:
+      allowed_origins:
+        - "https://smarttourism.dev"
+        - "https://www.smarttourism.dev"
+    
+    logging:
+      level: "WARNING"
+      format: "json"
+    
+    api:
+      title: "SmartTourism City Guide"
+      version: "1.0.0"
+      docs_url: null
+      openapi_url: null
+    
+    jwt:
+      secret_key: "${JWT_SECRET_KEY}"
+      algorithm: "HS256"
+      expire_minutes: 1440
+    
+    features:
+      enable_swagger: false
+      enable_profiling: false
+      enable_mock_data: false
+
+# Default settings (common to all environments)
+defaults:
+  app_name: "SmartTourism City Guide"
+  timezone: "Europe/Madrid"
+  
+  pagination:
+    default_limit: 20
+    max_limit: 1000
+  
+  file_upload:
+    max_size_mb: 50
+    allowed_types:
+      - image/jpeg
+      - image/png
+      - application/pdf
+  
+  security:
+    password_min_length: 8
+    require_https: true  # Set to false only in development
+    
+  ai:
+    model: "llama3"
+    max_tokens: 500
+    temperature: 0.7
