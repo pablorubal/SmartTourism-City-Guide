@@ -3,7 +3,7 @@ FastAPI Application Entry Point
 """
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
@@ -15,7 +15,8 @@ from app.middleware import (
     RequestLoggingMiddleware,
     CorrelationIDMiddleware,
 )
-from app.routes import pois, tourists, events, recommendations
+from app.routes import pois, tourists, events, recommendations, auth
+from app.websocket import ws_manager, handle_websocket_messages
 
 
 @asynccontextmanager
@@ -69,11 +70,58 @@ app.add_middleware(
 )
 
 
-# Routes
-app.include_router(pois.router, prefix="/api/v1/pois", tags=["POIs"])
-app.include_router(tourists.router, prefix="/api/v1/tourists", tags=["Tourists"])
-app.include_router(events.router, prefix="/api/v1/events", tags=["Events"])
-app.include_router(recommendations.router, prefix="/api/v1/recommendations", tags=["Recommendations"])
+# Routes (routers already have prefix set)
+app.include_router(auth.router)
+app.include_router(pois.router)
+app.include_router(tourists.router)
+app.include_router(events.router)
+app.include_router(recommendations.router)
+
+
+# WebSocket endpoint for real-time updates
+@app.websocket("/ws/{tourist_id}")
+async def websocket_endpoint(websocket: WebSocket, tourist_id: str, token: str = None):
+    """
+    WebSocket endpoint for real-time POI occupancy, events, and social updates
+    
+    Query params:
+        token: JWT authentication token
+    
+    Subscribe to channels by sending:
+    ```json
+    {
+        "type": "subscribe",
+        "channel": "poi_occupancy"
+    }
+    ```
+    
+    Available channels:
+    - poi_occupancy: POI occupancy changes
+    - events: New events and updates
+    - social_matches: Social match notifications
+    - chat: Chat messages
+    """
+    try:
+        # Authenticate and connect
+        if not await ws_manager.connect(websocket, tourist_id, token or ""):
+            return
+        
+        # Subscribe to default channels
+        ws_manager.subscribe(tourist_id, "poi_occupancy")
+        ws_manager.subscribe(tourist_id, "events")
+        
+        logger.info(f"👥 WebSocket connected for {tourist_id}")
+        
+        # Handle incoming messages
+        await handle_websocket_messages(websocket, tourist_id)
+    
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, tourist_id)
+        logger.info(f"👥 WebSocket disconnected for {tourist_id}")
+    
+    except Exception as e:
+        logger.error(f"❌ WebSocket error for {tourist_id}: {str(e)}")
+        ws_manager.disconnect(websocket, tourist_id)
 
 
 @app.get("/", tags=["Health"])
