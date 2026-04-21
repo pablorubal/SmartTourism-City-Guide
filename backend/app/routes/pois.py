@@ -30,7 +30,7 @@ async def list_pois(
     Returns POIs from database enriched with Orion CB data
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Build query
             query = select(PointOfInterest)
             
@@ -87,7 +87,7 @@ async def get_poi(poi_id: str):
     Enriched with occupancy, events, and nearby recommendations
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(PointOfInterest).where(PointOfInterest.id == poi_id)
             )
@@ -132,7 +132,7 @@ async def create_poi(poi_data: POISchema):
     Creates in both database and Orion CB
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Create in database
             new_poi = PointOfInterest(
                 name=poi_data.name,
@@ -188,7 +188,7 @@ async def update_poi(poi_id: str, poi_data: POISchema):
     Updates in both database and Orion CB
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(PointOfInterest).where(PointOfInterest.id == poi_id)
             )
@@ -250,7 +250,7 @@ async def delete_poi(poi_id: str):
     Deletes from both database and Orion CB
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(PointOfInterest).where(PointOfInterest.id == poi_id)
             )
@@ -289,7 +289,7 @@ async def delete_poi(poi_id: str):
 async def get_occupancy(poi_id: str):
     """Get real-time occupancy for a POI"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(PointOfInterest).where(PointOfInterest.id == poi_id)
             )
@@ -325,7 +325,7 @@ async def get_occupancy(poi_id: str):
 async def update_occupancy(poi_id: str, occupancy: int = Query(..., ge=0, le=100)):
     """Update occupancy data (from IoT sensors)"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(PointOfInterest).where(PointOfInterest.id == poi_id)
             )

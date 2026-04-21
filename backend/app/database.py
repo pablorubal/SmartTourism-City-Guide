@@ -3,6 +3,7 @@ Database configuration and session management for SmartTourism.
 Uses SQLAlchemy with asyncpg for async database access to TimescaleDB.
 """
 
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -31,13 +32,13 @@ class DatabaseManager:
         """Initialize database engine and session factory"""
         # Create async engine with asyncpg dialect
         self.engine = create_async_engine(
-            settings.database_url,
-            echo=settings.debug,
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,
             pool_pre_ping=True,
-            pool_size=settings.db_pool_size,
-            max_overflow=settings.db_max_overflow,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
             # Use NullPool for development to avoid connection issues
-            poolclass=NullPool if settings.debug else None,
+            poolclass=NullPool if settings.DEBUG else None,
         )
 
         # Create async session factory
@@ -80,6 +81,22 @@ class DatabaseManager:
                 raise
             finally:
                 await session.close()
+
+    @asynccontextmanager
+    async def session_context(self) -> AsyncGenerator[AsyncSession, None]:
+        """Get an async session context manager for direct use"""
+        if self.async_session is None:
+            self.initialize()
+        
+        session = self.async_session()
+        async with session as s:
+            try:
+                yield s
+            except Exception:
+                await s.rollback()
+                raise
+            finally:
+                await s.close()
 
     async def close(self):
         """Close database connections"""

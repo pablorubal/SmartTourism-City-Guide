@@ -34,7 +34,7 @@ async def list_events(
         limit: Pagination limit
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             query = select(Event)
             
             if upcoming_only:
@@ -86,7 +86,7 @@ async def list_events(
 async def get_event(event_id: str):
     """Get event details"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(Event).where(Event.id == event_id)
             )
@@ -127,7 +127,7 @@ async def get_event(event_id: str):
 async def create_event(event_data: EventSchema):
     """Create new event (admin only)"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Create in database
             new_event = Event(
                 name=event_data.name,
@@ -179,7 +179,7 @@ async def create_event(event_data: EventSchema):
 async def update_event(event_id: str, event_data: EventSchema):
     """Update event (admin only)"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(Event).where(Event.id == event_id)
             )
@@ -235,7 +235,7 @@ async def update_event(event_id: str, event_data: EventSchema):
 async def get_event_occupancy(event_id: str):
     """Get event occupancy status"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(Event).where(Event.id == event_id)
             )
@@ -272,7 +272,7 @@ async def get_event_occupancy(event_id: str):
 async def get_upcoming_events(destination_id: str, days_ahead: int = Query(7, ge=1, le=30)):
     """Get upcoming events for a destination"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             from sqlalchemy import and_
             
             result = await session.execute(

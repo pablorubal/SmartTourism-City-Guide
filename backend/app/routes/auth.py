@@ -39,7 +39,7 @@ async def login(request: TokenRequest) -> TokenResponse:
     
     Returns JWT access token on successful authentication
     """
-    async with db_manager.get_session() as session:
+    async with db_manager.session_context() as session:
         # Find user by email
         result = await session.execute(
             select(User).where(User.email == request.email)
@@ -88,7 +88,7 @@ async def signup(request: SignupRequest) -> TokenResponse:
     
     Creates new user and returns JWT access token
     """
-    async with db_manager.get_session() as session:
+    async with db_manager.session_context() as session:
         # Check if user already exists
         result = await session.execute(
             select(User).where(User.email == request.email)

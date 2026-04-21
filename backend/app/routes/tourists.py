@@ -25,7 +25,7 @@ async def get_tourist_profile(tourist_id: str, token: Optional[str] = None):
         token: Optional JWT token for authorization
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Check authorization
             if token:
                 user_data = TokenManager.get_user_from_token(token)
@@ -82,7 +82,7 @@ async def create_tourist_profile(
     Typically called after user signup
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Check if user exists
             result = await session.execute(
                 select(User).where(User.id == user_id)
@@ -144,7 +144,7 @@ async def update_tourist_profile(
 ):
     """Update tourist preferences and settings"""
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             result = await session.execute(
                 select(TouristProfile).where(TouristProfile.user_id == tourist_id)
             )
@@ -198,7 +198,7 @@ async def get_consumption_history(
     Paginated list of consumption behavior records
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Get total count
             count_result = await session.execute(
                 select(ConsumptionBehavior).where(
@@ -255,7 +255,7 @@ async def get_recommendations(tourist_id: str):
     - Current location/time
     """
     try:
-        async with db_manager.get_session() as session:
+        async with db_manager.session_context() as session:
             # Get tourist profile
             result = await session.execute(
                 select(TouristProfile).where(TouristProfile.user_id == tourist_id)
